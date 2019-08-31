@@ -1,0 +1,7 @@
+[radiation-counter-service.addr]
+ip = "127.0.0.1"
+port = 8082
+
+[radiation-counter-service.device]
+bus = "/dev/i2c-1"
+addr = 60

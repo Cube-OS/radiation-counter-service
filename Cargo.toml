@@ -1,0 +1,12 @@
+[package]
+name = "radiation-counter-service"
+version = "0.1.0"
+authors = ["BH Cho <byunghoon.cho@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+kubos-service = { path = "../kubos/services/kubos-service" }
+juniper =  "0.11"
+log = "^0.4.0"
+mount = "0.3.0"
+syslog = "4.0"
