@@ -5,7 +5,7 @@ authors = ["BH Cho <byunghoon.cho@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-kubos-service = { path = "../kubos/services/kubos-service" }
+kubos-service = { path = "../../../kubos/services/kubos-service" }
 juniper =  "0.11"
 log = "^0.4.0"
 mount = "0.3.0"
