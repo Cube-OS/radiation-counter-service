@@ -1,6 +1,5 @@
 use crate::models::*;
-use clyde_3g_eps_api::{Checksum, Clyde3gEps, Eps};
-use eps_api::EpsResult;
+use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
 use failure::Error;
 use rust_i2c::*;
 use std::sync::{Arc, Mutex, RwLock};
@@ -26,10 +25,10 @@ pub enum Mutations {
     TestHardware,
 }
 
-fn watchdog_thread(eps: Arc<Mutex<Box<Clyde3gEps + Send>>>) {
+fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
     loop {
         thread::sleep(Duration::from_secs(60));
-        let _res_ = eps.lock().unwrap().reset_comms_watchdog();
+        let _res_ = counter.lock().unwrap().reset_comms_watchdog();
     }
 }
 
@@ -37,7 +36,7 @@ fn watchdog_thread(eps: Arc<Mutex<Box<Clyde3gEps + Send>>>) {
 #[derive(Clone)]
 pub struct Subsystem {
     /// Underlying EPS object
-    pub radiation_counter: Arc<Mutex<Box<Clyde3gEps + Send>>>,
+    pub radiation_counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>,
     /// Last mutation executed
     pub last_mutation: Arc<RwLock<Mutations>>,
     /// Errors accumulated over all queries and mutations
@@ -48,17 +47,142 @@ pub struct Subsystem {
 
 impl Subsystem {
     /// Create a new subsystem instance for the service to use
-    pub fn new(eps: Box<SugarRadCounter + Send>) -> CounterResult<Self> {
-        let eps = Arc::new(Mutex::new(eps));
-        let thread_eps = eps.clone();
-        let watchdog = thread::spawn(move || watchdog_thread(thread_eps));
+    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>) -> CounterResult<Self> {
+        let radiation_counter = Arc::new(Mutex::new(radiation_counter));
+        let thread_counter = radiation_counter.clone();
+        let watchdog = thread::spawn(move || watchdog_thread(thread_counter));
 
         Ok(Self {
-            eps,
+            radiation_counter,
             last_mutation: Arc::new(RwLock::new(Mutations::None)),
             errors: Arc::new(RwLock::new(vec![])),
             watchdog_handle: Arc::new(Mutex::new(watchdog)),
-            checksum: Arc::new(Mutex::new(Checksum::default())),
         })
+    }
+    
+    /// Create the underlying Radiation CounterResult object and then create a new subsystem which will use it
+    pub fn from_path(bus: &str, addr: u16) -> CounterResult<Self> {
+        let cuava_radiation_counter: Box<dyn CuavaRadiationCounter + Send> =
+            Box::new(RadiationCounter::new(Connection::from_path(bus, addr)));
+        Subsystem::new(cuava_radiation_counter)
+    }
+
+    /// Get the requested telemetry item
+    pub fn get_telemetry(
+        &self,
+        telem_type: counter_telemetry::Type,
+    ) -> Result<f64, String> {
+        let result = run!(
+            self.radiation_counter
+                .lock()
+                .unwrap()
+                .get_telemetry(telem_type.into()),
+            self.errors
+        )?;
+
+        Ok(result)
+    }
+
+    /// Get the specific type of reset counts
+    pub fn get_reset_telemetry(
+        &self,
+        telem_type: reset_telemetry::Type,
+    ) -> Result<u8, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        Ok(run!(radiation_counter.get_reset_telemetry(telem_type.into()), self.errors)?.into())
+    }
+
+    /// Get the current watchdog period setting
+    pub fn get_comms_watchdog_period(&self) -> Result<u8, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        Ok(run!(radiation_counter.get_comms_watchdog_period(), self.errors)?)
+    }
+
+    /// Get the last error the Radiation Counter encountered
+    pub fn get_last_error(&self) -> Result<last_error::Error, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        Ok(run!(radiation_counter.get_last_error(), self.errors)?.into())
+    }
+
+    /// Trigger a manual reset of the Radiation Counter
+    pub fn manual_reset(&self) -> Result<MutationResponse, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        match run!(radiation_counter.manual_reset(), self.errors) {
+            Ok(_v) => Ok(MutationResponse {
+                success: true,
+                errors: "".to_string(),
+            }),
+            Err(e) => Ok(MutationResponse {
+                success: false,
+                errors: e,
+            }),
+        }
+    }
+
+    /// Kick the I2C watchdog
+    pub fn reset_watchdog(&self) -> Result<MutationResponse, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        match run!(radiation_counter.reset_comms_watchdog(), self.errors) {
+            Ok(_v) => Ok(MutationResponse {
+                success: true,
+                errors: "".to_string(),
+            }),
+            Err(e) => Ok(MutationResponse {
+                success: false,
+                errors: e,
+            }),
+        }
+    }
+
+    /// Set the I2C watchdog timeout period
+    pub fn set_watchdog_period(&self, period: u8) -> Result<MutationResponse, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        match run!(radiation_counter.set_comms_watchdog_period(period), self.errors) {
+            Ok(_v) => Ok(MutationResponse {
+                success: true,
+                errors: "".to_string(),
+            }),
+            Err(e) => Ok(MutationResponse {
+                success: false,
+                errors: e,
+            }),
+        }
+    }
+
+    /// Pass raw command values through to the EPS
+    pub fn raw_command(&self, command: u8, data: Vec<u8>) -> Result<MutationResponse, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        match run!(radiation_counter.raw_command(command, data), self.errors) {
+            Ok(_v) => Ok(MutationResponse {
+                success: true,
+                errors: "".to_string(),
+            }),
+            Err(e) => Ok(MutationResponse {
+                success: false,
+                errors: e,
+            }),
+        }
+    }
+
+    /// Record the last mutation executed by the service
+    pub fn set_last_mutation(&self, mutation: Mutations) {
+        if let Ok(mut last_cmd) = self.last_mutation.write() {
+            *last_cmd = mutation;
+        }
+    }
+
+    /// Fetch all errors since the last time this function was called, then clear the errors storage
+    pub fn get_errors(&self) -> CounterResult<Vec<String>> {
+        match self.errors.write() {
+            Ok(mut master_vec) => {
+                let current = master_vec.clone();
+                master_vec.clear();
+                master_vec.shrink_to_fit();
+                Ok(current)
+            }
+            _ => Ok(vec![
+                "Error: Failed to borrow master errors vector".to_string()
+            ]),
+        }
     }
 }

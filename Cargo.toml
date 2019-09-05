@@ -6,6 +6,9 @@ edition = "2018"
 
 [dependencies]
 kubos-service = { path = "../../../kubos/services/kubos-service" }
+rust-i2c = { path = "../../../kubos/hal/rust-hal/rust-i2c" }
+radiation-counter-api = { path = "../../apis/radiation-counter-api" }
+failure = "0.1.2"
 juniper =  "0.11"
 log = "^0.4.0"
 mount = "0.3.0"

@@ -14,16 +14,19 @@
 // limitations under the License.
 //
 
-#![deny(warnings)]
+// #![deny(warnings)]
 
 #[macro_use]
 extern crate juniper;
+#[macro_use]
+extern crate kubos_service;
 
-mod model;
-mod schema;
+pub mod models;
+pub mod schema;
 
-use crate::model::Subsystem;
-use crate::schema::{MutationRoot, QueryRoot};
+use crate::models::subsystem::Subsystem;
+use crate::schema::mutation::Root as MutationRoot;
+use crate::schema::query::Root as QueryRoot;
 use kubos_service::{Config, Service};
 use log::error;
 use syslog::Facility;
@@ -45,19 +48,21 @@ fn main() {
 
     let device = config.get("device").unwrap();
     let bus = device["bus"].as_str().expect("Failed to get I2C bus value");
-    let addr = device["addr"].as_integer().expect("Failed to get I2C address value");
+    let addr = device["addr"].as_integer().expect("Failed to get I2C address value") as u16;
 
     println!("I2C Bus:     {}", bus);
     println!("I2C Address: {}", addr);
 
-    // let subsystem: Box<Subsystem> = Box::new(
-    //     Subsystem::from_path(bus, addr)
-    //         .map_err(|err| {
-    //             error!("Failed to create subsystem: {:?}", err);
-    //             err
-    //         })
-    //         .unwrap(),
-    // );
+    // let i2c = rust_i2c::Connection::from_path(&bus, addr as u16);
 
-    Service::new(config, Subsystem::new(), QueryRoot, MutationRoot).start();
+    let subsystem: Box<Subsystem> = Box::new(
+        Subsystem::from_path(bus, addr)
+            .map_err(|err| {
+                error!("Failed to create subsystem: {:?}", err);
+                err
+            })
+            .unwrap(),
+    );
+
+    Service::new(config, subsystem, QueryRoot, MutationRoot).start();
 }
