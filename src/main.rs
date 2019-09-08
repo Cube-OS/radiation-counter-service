@@ -49,14 +49,16 @@ fn main() {
     let device = config.get("device").unwrap();
     let bus = device["bus"].as_str().expect("Failed to get I2C bus value");
     let addr = device["addr"].as_integer().expect("Failed to get I2C address value") as u16;
+    let power_channel = device["power_channel"].as_integer().expect("Failed to get power channel value") as u8;
 
-    println!("I2C Bus:     {}", bus);
-    println!("I2C Address: {}", addr);
+    println!("I2C Bus:       {}", bus);
+    println!("I2C Address:   {}", addr);
+    println!("Power Channel: {}", power_channel);
 
     // let i2c = rust_i2c::Connection::from_path(&bus, addr as u16);
 
     let subsystem: Box<Subsystem> = Box::new(
-        Subsystem::from_path(bus, addr)
+        Subsystem::from_path(bus, addr, power_channel)
             .map_err(|err| {
                 error!("Failed to create subsystem: {:?}", err);
                 err

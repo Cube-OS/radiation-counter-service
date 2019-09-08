@@ -27,13 +27,14 @@ graphql_object!(Telemetry: Context as "telemetry" |&self| {
     // Fetch telemetry data for the radiation counter.
     // All returned values are automatically converted from their original raw data.
     //
-    // telemetry {
-    //     Voltage: f64,
-    //     Current: f64,
-    //     Power: f64,
+    // powerTelemetry {
+    //     voltage: f64,
+    //     current: f64,
+    //     power: f64,
+    //     powerOnOff: bool,
     // }
-    field telemetry() -> counter_telemetry::Telemetry
-        as "Telemetry"
+    field power_telemetry() -> counter_telemetry::Telemetry
+        as "Power Telemetry"
     {
         counter_telemetry::Telemetry {}
     }

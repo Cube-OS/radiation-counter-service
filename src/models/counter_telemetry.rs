@@ -17,46 +17,69 @@
 //! Data returned by `telemetry` query
 
 use crate::schema::Context;
-use radiation_counter_api::CounterTelemetry::Type as CounterTelemetryType;
+// use radiation_counter_api::CounterTelemetry::Type as CounterTelemetryType;
 use juniper::FieldResult;
 
 /// Telemetry structure
 pub struct Telemetry;
 
-macro_rules! make_telemetry {
-    (
-        $($type: ident,)+
-    ) => {
-        /// Radiation Counter telemetry values
-        #[derive(Clone, Debug, Hash, Eq, GraphQLEnum, PartialEq)]
-        pub enum Type {
-            $(
-                /// $type
-                $type,
-            )+
-        }
-
-        impl Into<CounterTelemetryType> for Type {
-            fn into(self) -> CounterTelemetryType {
-                match self {
-                    $(Type::$type => CounterTelemetryType::$type,)+
-                }
-            }
-        }
-
-        graphql_object!(Telemetry: Context as "Telemetry" |&self| {
-            $(
-                field $type(&executor) -> FieldResult<f64>
-                {
-                    Ok(f64::from(executor.context().subsystem().get_telemetry(Type::$type)?))
-                }
-            )+
-        });
+graphql_object!(Telemetry: Context as "PowerTelemetry" |&self| {
+    field voltage(&executor) -> FieldResult<f64>
+    {
+        Ok(executor.context().subsystem().get_voltage()? as f64)
     }
-}
 
-make_telemetry!(
-    Voltage,
-    Current,
-    Power,
-);
+    field current(&executor) -> FieldResult<f64>
+    {
+        Ok(executor.context().subsystem().get_current()? as f64)
+    }
+
+    field power(&executor) -> FieldResult<f64>
+    {
+        Ok(executor.context().subsystem().get_power()? as f64)
+    }
+
+    field powerOnOff(&executor) -> FieldResult<bool>
+    {
+        Ok(executor.context().subsystem().get_power_on_off()? as bool)
+    }
+});
+
+
+// macro_rules! make_telemetry {
+//     (
+//         $($type: ident,)+
+//     ) => {
+//         /// Radiation Counter telemetry values
+//         #[derive(Clone, Debug, Hash, Eq, GraphQLEnum, PartialEq)]
+//         pub enum Type {
+//             $(
+//                 /// $type
+//                 $type,
+//             )+
+//         }
+// 
+//         impl Into<CounterTelemetryType> for Type {
+//             fn into(self) -> CounterTelemetryType {
+//                 match self {
+//                     $(Type::$type => CounterTelemetryType::$type,)+
+//                 }
+//             }
+//         }
+// 
+//         graphql_object!(Telemetry: Context as "Telemetry" |&self| {
+//             $(
+//                 field $type(&executor) -> FieldResult<f64>
+//                 {
+//                     Ok(f64::from(executor.context().subsystem().get_telemetry(Type::$type)?))
+//                 }
+//             )+
+//         });
+//     }
+// }
+// 
+// make_telemetry!(
+//     Voltage,
+//     Current,
+//     Power,
+// );
