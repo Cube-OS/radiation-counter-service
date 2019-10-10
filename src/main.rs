@@ -31,11 +31,6 @@ use kubos_service::{Config, Service};
 use log::error;
 use syslog::Facility;
 
-use rust_i2c::*;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::io::Error;
-use std::thread;
-
 fn main() {
     syslog::init(
         Facility::LOG_DAEMON,
@@ -51,6 +46,7 @@ fn main() {
         })
         .unwrap();
 
+    // TODO: fail gracefully
     let device = config.get("device").unwrap();
     let bus = device["bus"].as_str().expect("Failed to get I2C bus value");
     let addr = device["addr"].as_integer().expect("Failed to get I2C address value") as u16;
@@ -60,8 +56,6 @@ fn main() {
     println!("I2C Address:   {}", addr);
     println!("Power Channel: {}", power_channel);
 
-    let connection = rust_i2c::Connection::from_path(&bus, addr);
-
     let subsystem: Box<Subsystem> = Box::new(
         Subsystem::from_path(bus, addr, power_channel)
             .map_err(|err| {
@@ -70,26 +64,6 @@ fn main() {
             })
             .unwrap(),
     );
-    
-    thread::spawn(move || loop {
-        let count_request = Command {
-            cmd: 0x01,
-            data: vec![],
-        };
-        
-//         let connection = subsystem.radiation_counter.lock().unwrap().connection;
-//         println!("{:?}", connection);
-//         
-        let count_result: Result<Vec<u8>, Error> = connection.transfer(count_request, 2, Duration::from_millis(3));
-        match count_result {
-            Ok(count) => {
-                let now: Duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-                println!("Got count {} at time {:?}", count[0], now);
-            },
-            Err(e) => println!("Error {}", e),
-        }
-        thread::sleep(Duration::from_secs(2));
-    });
 
     Service::new(config, subsystem, QueryRoot, MutationRoot).start();
 }
