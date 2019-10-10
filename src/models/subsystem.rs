@@ -33,11 +33,15 @@ fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
 }
 
 fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
+    let mut counts = Vec::new();
+    
     loop {
         let count_result = counter.lock().unwrap().get_radiation_count();
         match count_result {
             Ok((timestamp, count)) => {
                 println!("Got count {} at time {:?}", count, timestamp);
+                counts.push((timestamp, count));
+                println!("{:?}", counts);
             },
             Err(e) => println!("Error {}", e),
         }
