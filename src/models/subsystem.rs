@@ -1,4 +1,5 @@
 use crate::models::*;
+use crate::models::housekeeping::RCHk;
 use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
 use failure::Error;
 use rust_i2c::*;
@@ -255,5 +256,21 @@ impl Subsystem {
     pub fn get_radiation_count(&self) -> Result<(Duration, u8), String> {
         let radiation_counter = self.radiation_counter.lock().unwrap();
         Ok(run!(radiation_counter.get_radiation_count(), self.errors)?)
+    }
+    
+    /// Get housekeeping data
+    pub fn get_housekeeping(&self) -> CounterResult<RCHk> {
+        println!("Get radiation counter housekeeping data");
+        
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
+        
+        let rchk = RCHk {
+            voltage: result.voltage as i32,
+            current: result.current as i32,
+            timestamps: result.timestamps as Vec<i32>,
+            readings: result. readings as Vec<i32>,
+        };
+        Ok(rchk)
     }
 }

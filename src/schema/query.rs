@@ -17,6 +17,7 @@
 //! Service queries
 
 use crate::models::*;
+use crate::models::housekeeping::RCHk;
 use crate::schema::Context;
 use juniper::FieldResult;
 
@@ -135,5 +136,11 @@ graphql_object!(Root: Context as "Query" |&self| {
     field telemetry(&executor) -> FieldResult<Telemetry>
     {
         Ok(Telemetry)
+    }
+    
+    // Housekeeping
+    field rchk(&executor) -> FieldResult<RCHk>
+    {
+        Ok(executor.context().subsystem().get_housekeeping()?)
     }
 });
