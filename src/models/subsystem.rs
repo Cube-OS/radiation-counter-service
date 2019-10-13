@@ -34,15 +34,15 @@ fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
 }
 
 fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
-    let mut counts = Vec::new();
+//     let mut counts = Vec::new();
     
     loop {
         let count_result = counter.lock().unwrap().get_radiation_count();
         match count_result {
             Ok((timestamp, count)) => {
                 println!("Got count {} at time {:?}", count, timestamp);
-                counts.push((timestamp, count));
-                println!("{:?}", counts);
+//                 counts.push((timestamp, count));
+//                 println!("{:?}", counts);
             },
             Err(e) => println!("Error {}", e),
         }
@@ -254,7 +254,7 @@ impl Subsystem {
     
     /// Get radiation count over i2c
     pub fn get_radiation_count(&self) -> Result<(Duration, u8), String> {
-        let radiation_counter = self.radiation_counter.lock().unwrap();
+        let mut radiation_counter = self.radiation_counter.lock().unwrap();
         Ok(run!(radiation_counter.get_radiation_count(), self.errors)?)
     }
     
@@ -262,14 +262,14 @@ impl Subsystem {
     pub fn get_housekeeping(&self) -> CounterResult<RCHk> {
         println!("Get radiation counter housekeeping data");
         
-        let radiation_counter = self.radiation_counter.lock().unwrap();
+        let mut radiation_counter = self.radiation_counter.lock().unwrap();
         let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
         
         let rchk = RCHk {
             voltage: result.voltage as i32,
             current: result.current as i32,
             timestamps: result.timestamps as Vec<i32>,
-            readings: result. readings as Vec<i32>,
+            readings: result.readings as Vec<i32>,
         };
         Ok(rchk)
     }
