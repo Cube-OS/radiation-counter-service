@@ -5,4 +5,3 @@ port = 8082
 [radiation-counter-service.device]
 bus = "/dev/i2c-2"
 addr = 0x69
-power_channel = 1
