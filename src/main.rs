@@ -52,9 +52,9 @@ fn main() {
     let addr = device["addr"].as_integer().expect("Failed to get I2C address value") as u16;
     let power_channel = device["power_channel"].as_integer().expect("Failed to get power channel value") as u8;
 
-    println!("I2C Bus:       {}", bus);
-    println!("I2C Address:   {}", addr);
-    println!("Power Channel: {}", power_channel);
+    info!("I2C Bus:       {}", bus);
+    info!("I2C Address:   {}", addr);
+    info!("Power Channel: {}", power_channel);
 
     let subsystem: Box<Subsystem> = Box::new(
         Subsystem::from_path(bus, addr, power_channel)

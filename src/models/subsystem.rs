@@ -260,7 +260,7 @@ impl Subsystem {
     
     /// Get housekeeping data
     pub fn get_housekeeping(&self) -> CounterResult<RCHk> {
-        println!("Get radiation counter housekeeping data");
+        info!("RC housekeeping data requested");
         
         let mut radiation_counter = self.radiation_counter.lock().unwrap();
         let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
