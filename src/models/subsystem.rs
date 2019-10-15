@@ -1,4 +1,5 @@
 use crate::models::*;
+use crate::models::housekeeping::RCHk;
 use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
 use failure::Error;
 use rust_i2c::*;
@@ -32,6 +33,23 @@ fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
     }
 }
 
+fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
+//     let mut counts = Vec::new();
+    
+    loop {
+        let count_result = counter.lock().unwrap().get_radiation_count();
+        match count_result {
+            Ok((timestamp, count)) => {
+                println!("Got count {} at time {:?}", count, timestamp);
+//                 counts.push((timestamp, count));
+//                 println!("{:?}", counts);
+            },
+            Err(e) => println!("Error {}", e),
+        }
+        thread::sleep(Duration::from_secs(5));
+    }
+}
+
 /// Main structure for controlling and accessing system resources
 #[derive(Clone)]
 pub struct Subsystem {
@@ -43,6 +61,8 @@ pub struct Subsystem {
     pub errors: Arc<RwLock<Vec<String>>>,
     /// Watchdog kicking thread handle
     pub watchdog_handle: Arc<Mutex<thread::JoinHandle<()>>>,
+    /// Count retriever thread handle
+    pub counter_handle: Arc<Mutex<thread::JoinHandle<()>>>,
     /// Channel number for EPS connection
     pub power_channel: u8,
 }
@@ -51,14 +71,18 @@ impl Subsystem {
     /// Create a new subsystem instance for the service to use
     pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
-        let thread_counter = radiation_counter.clone();
-        let watchdog = thread::spawn(move || watchdog_thread(thread_counter));
+        let watchdog_thread_counter = radiation_counter.clone();
+        let watchdog = thread::spawn(move || watchdog_thread(watchdog_thread_counter));
+        
+        let counter_thread_counter = radiation_counter.clone();
+        let counter = thread::spawn(move || counter_thread(counter_thread_counter));
 
         Ok(Self {
             radiation_counter,
             last_mutation: Arc::new(RwLock::new(Mutations::None)),
             errors: Arc::new(RwLock::new(vec![])),
             watchdog_handle: Arc::new(Mutex::new(watchdog)),
+            counter_handle: Arc::new(Mutex::new(counter)),
             power_channel: power_channel,
         })
     }
@@ -226,5 +250,27 @@ impl Subsystem {
                 "Error: Failed to borrow master errors vector".to_string()
             ]),
         }
+    }
+    
+    /// Get radiation count over i2c
+    pub fn get_radiation_count(&self) -> Result<(Duration, u8), String> {
+        let mut radiation_counter = self.radiation_counter.lock().unwrap();
+        Ok(run!(radiation_counter.get_radiation_count(), self.errors)?)
+    }
+    
+    /// Get housekeeping data
+    pub fn get_housekeeping(&self) -> CounterResult<RCHk> {
+        info!("RC housekeeping data requested");
+        
+        let mut radiation_counter = self.radiation_counter.lock().unwrap();
+        let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
+        
+        let rchk = RCHk {
+            voltage: result.voltage as i32,
+            current: result.current as i32,
+            timestamps: result.timestamps as Vec<i32>,
+            readings: result.readings as Vec<i32>,
+        };
+        Ok(rchk)
     }
 }
