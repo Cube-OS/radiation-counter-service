@@ -1,6 +1,9 @@
+extern crate gomspace_p31u_api;
+
 use crate::models::*;
 use crate::models::housekeeping::RCHk;
 use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
+use gomspace_p31u_api::{EPS};
 use failure::Error;
 use rust_i2c::*;
 use std::sync::{Arc, Mutex, RwLock};
@@ -55,6 +58,8 @@ fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
 pub struct Subsystem {
     /// Underlying Radiation Counter object
     pub radiation_counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>,
+    /// Underlying EPS object
+    pub eps: Arc<Mutex<Box<dyn< GsEps>>>,
     /// Last mutation executed
     pub last_mutation: Arc<RwLock<Mutations>>,
     /// Errors accumulated over all queries and mutations
@@ -71,6 +76,7 @@ impl Subsystem {
     /// Create a new subsystem instance for the service to use
     pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
+        let eps = Arc::new(Mutex::new(Box::new(Eps::new("/dev/i2c0",0x08,600))));
         let watchdog_thread_counter = radiation_counter.clone();
         let watchdog = thread::spawn(move || watchdog_thread(watchdog_thread_counter));
         
@@ -79,6 +85,7 @@ impl Subsystem {
 
         Ok(Self {
             radiation_counter,
+            eps,
             last_mutation: Arc::new(RwLock::new(Mutations::None)),
             errors: Arc::new(RwLock::new(vec![])),
             watchdog_handle: Arc::new(Mutex::new(watchdog)),
@@ -109,6 +116,9 @@ impl Subsystem {
 // 
 //         Ok(result)
 //     }
+
+
+    // in order to get power status implement EPS struct from eps_api
 
     /// Get the voltage being used by the module
     pub fn get_voltage(&self) -> Result<f64, String> {
