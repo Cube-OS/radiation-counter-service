@@ -3,12 +3,13 @@ extern crate gomspace_p31u_api;
 use crate::models::*;
 use crate::models::housekeeping::RCHk;
 use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
-use gomspace_p31u_api::{EPS};
+use gomspace_p31u_api::{Eps, GsEps};
 use failure::Error;
 use rust_i2c::*;
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::Duration;
+use log::info;
 
 /// Enum for tracking the last mutation executed
 #[derive(Copy, Clone, Debug, Eq, Hash, GraphQLEnum, PartialEq)]
@@ -59,7 +60,7 @@ pub struct Subsystem {
     /// Underlying Radiation Counter object
     pub radiation_counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>,
     /// Underlying EPS object
-    pub eps: Arc<Mutex<Box<dyn< GsEps>>>,
+    pub eps: Arc<Mutex<Box<dyn GsEps>>>,
     /// Last mutation executed
     pub last_mutation: Arc<RwLock<Mutations>>,
     /// Errors accumulated over all queries and mutations
@@ -76,7 +77,10 @@ impl Subsystem {
     /// Create a new subsystem instance for the service to use
     pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
-        let eps = Arc::new(Mutex::new(Box::new(Eps::new("/dev/i2c0",0x08,600))));
+        let bus = "/dev/i2c0";
+        let addr: u8 = 0x08;
+        let wd_timeout: u32 = 600;
+        let eps: Arc<Mutex<Box<dyn GsEps>>> = Arc::new(Mutex::new(Box::new(Eps::new(&bus,addr,wd_timeout)?)));
         let watchdog_thread_counter = radiation_counter.clone();
         let watchdog = thread::spawn(move || watchdog_thread(watchdog_thread_counter));
         

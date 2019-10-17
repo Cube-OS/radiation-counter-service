@@ -28,7 +28,7 @@ use crate::models::subsystem::Subsystem;
 use crate::schema::mutation::Root as MutationRoot;
 use crate::schema::query::Root as QueryRoot;
 use kubos_service::{Config, Service};
-use log::error;
+use log::{error,info};
 use syslog::Facility;
 
 fn main() {
