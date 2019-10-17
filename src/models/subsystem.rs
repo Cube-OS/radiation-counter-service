@@ -77,7 +77,7 @@ impl Subsystem {
     /// Create a new subsystem instance for the service to use
     pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
-        let bus = "/dev/i2c0";
+        let bus = "/dev/i2c-0";
         let addr: u8 = 0x08;
         let wd_timeout: u32 = 600;
         let eps: Arc<Mutex<Box<dyn GsEps>>> = Arc::new(Mutex::new(Box::new(Eps::new(&bus,addr,wd_timeout)?)));
