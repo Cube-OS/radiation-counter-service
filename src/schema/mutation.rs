@@ -113,11 +113,11 @@ graphql_object!(Root: Context as "Mutation" |&self| {
     //          errors: String!
     //      }
     //  }
-    field issue_raw_command(&executor, command: i32, data: Vec<i32>) -> FieldResult<MutationResponse>
-        as "Issue raw command to Radiation Counter"
-    {
-        executor.context().subsystem().set_last_mutation(Mutations::RawCommand);
-        let data_u8 = data.iter().map(|x| *x as u8).collect();
-        Ok(executor.context().subsystem().raw_command(command as u8, data_u8)?)
-    }
+//     field issue_raw_command(&executor, command: i32, data: Vec<i32>) -> FieldResult<MutationResponse>
+//         as "Issue raw command to Radiation Counter"
+//     {
+//         executor.context().subsystem().set_last_mutation(Mutations::RawCommand);
+//         let data_u8 = data.iter().map(|x| *x as u8).collect();
+//         Ok(executor.context().subsystem().raw_command(command as u8, data_u8)?)
+//     }
 });

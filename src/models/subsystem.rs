@@ -1,5 +1,3 @@
-extern crate gomspace_p31u_api;
-
 use crate::models::*;
 use crate::models::housekeeping::RCHk;
 use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
@@ -75,12 +73,9 @@ pub struct Subsystem {
 
 impl Subsystem {
     /// Create a new subsystem instance for the service to use
-    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
+    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8, eps_bus: &str, eps_addr: u8, eps_wd_timeout: u32) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
-        let bus = "/dev/i2c-0";
-        let addr: u8 = 0x08;
-        let wd_timeout: u32 = 600;
-        let eps: Arc<Mutex<Box<dyn GsEps>>> = Arc::new(Mutex::new(Box::new(Eps::new(&bus,addr,wd_timeout)?)));
+        let eps: Arc<Mutex<Box<dyn GsEps>>> = Arc::new(Mutex::new(Box::new(Eps::new(&eps_bus, eps_addr, eps_wd_timeout)?)));
         let watchdog_thread_counter = radiation_counter.clone();
         let watchdog = thread::spawn(move || watchdog_thread(watchdog_thread_counter));
         
@@ -99,10 +94,10 @@ impl Subsystem {
     }
     
     /// Create the underlying Radiation CounterResult object and then create a new subsystem which will use it
-    pub fn from_path(bus: &str, addr: u16, power_channel: u8) -> CounterResult<Self> {
+    pub fn from_path(bus: &str, addr: u16, power_channel: u8, eps_bus: &str, eps_addr: u8, eps_wd_timeout: u32) -> CounterResult<Self> {
         let cuava_radiation_counter: Box<dyn CuavaRadiationCounter + Send> =
             Box::new(RadiationCounter::new(Connection::from_path(bus, addr)));
-        Subsystem::new(cuava_radiation_counter, power_channel)
+        Subsystem::new(cuava_radiation_counter, power_channel, eps_bus, eps_addr, eps_wd_timeout)
     }
 
     /// Get the requested telemetry item
@@ -230,19 +225,19 @@ impl Subsystem {
     }
 
     /// Pass raw command values through to the EPS
-    pub fn raw_command(&self, command: u8, data: Vec<u8>) -> Result<MutationResponse, String> {
-        let radiation_counter = self.radiation_counter.lock().unwrap();
-        match run!(radiation_counter.raw_command(command, data), self.errors) {
-            Ok(_v) => Ok(MutationResponse {
-                success: true,
-                errors: "".to_string(),
-            }),
-            Err(e) => Ok(MutationResponse {
-                success: false,
-                errors: e,
-            }),
-        }
-    }
+//     pub fn raw_command(&self, command: u8, data: Vec<u8>) -> Result<MutationResponse, String> {
+//         let radiation_counter = self.radiation_counter.lock().unwrap();
+//         match run!(radiation_counter.raw_command(command, data), self.errors) {
+//             Ok(_v) => Ok(MutationResponse {
+//                 success: true,
+//                 errors: "".to_string(),
+//             }),
+//             Err(e) => Ok(MutationResponse {
+//                 success: false,
+//                 errors: e,
+//             }),
+//         }
+//     }
 
     /// Record the last mutation executed by the service
     pub fn set_last_mutation(&self, mutation: Mutations) {
