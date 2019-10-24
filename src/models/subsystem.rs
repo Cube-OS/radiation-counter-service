@@ -1,7 +1,6 @@
 use crate::models::*;
 use crate::models::housekeeping::RCHk;
 use radiation_counter_api::{CuavaRadiationCounter, RadiationCounter, CounterResult};
-use gomspace_p31u_api::{Eps, GsEps};
 use failure::Error;
 use rust_i2c::*;
 use std::sync::{Arc, Mutex, RwLock};
@@ -36,15 +35,11 @@ fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
 }
 
 fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
-//     let mut counts = Vec::new();
-    
     loop {
         let count_result = counter.lock().unwrap().get_radiation_count();
         match count_result {
             Ok((timestamp, count)) => {
                 println!("Got count {} at time {:?}", count, timestamp);
-//                 counts.push((timestamp, count));
-//                 println!("{:?}", counts);
             },
             Err(e) => println!("Error {}", e),
         }
@@ -57,8 +52,6 @@ fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
 pub struct Subsystem {
     /// Underlying Radiation Counter object
     pub radiation_counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>,
-    /// Underlying EPS object
-    pub eps: Arc<Mutex<Box<dyn GsEps>>>,
     /// Last mutation executed
     pub last_mutation: Arc<RwLock<Mutations>>,
     /// Errors accumulated over all queries and mutations
@@ -73,9 +66,8 @@ pub struct Subsystem {
 
 impl Subsystem {
     /// Create a new subsystem instance for the service to use
-    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8, eps_bus: &str, eps_addr: u8, eps_wd_timeout: u32) -> CounterResult<Self> {
+    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
-        let eps: Arc<Mutex<Box<dyn GsEps>>> = Arc::new(Mutex::new(Box::new(Eps::new(&eps_bus, eps_addr, eps_wd_timeout)?)));
         let watchdog_thread_counter = radiation_counter.clone();
         let watchdog = thread::spawn(move || watchdog_thread(watchdog_thread_counter));
         
@@ -84,7 +76,6 @@ impl Subsystem {
 
         Ok(Self {
             radiation_counter,
-            eps,
             last_mutation: Arc::new(RwLock::new(Mutations::None)),
             errors: Arc::new(RwLock::new(vec![])),
             watchdog_handle: Arc::new(Mutex::new(watchdog)),
@@ -94,68 +85,10 @@ impl Subsystem {
     }
     
     /// Create the underlying Radiation CounterResult object and then create a new subsystem which will use it
-    pub fn from_path(bus: &str, addr: u16, power_channel: u8, eps_bus: &str, eps_addr: u8, eps_wd_timeout: u32) -> CounterResult<Self> {
+    pub fn from_path(bus: &str, addr: u16, power_channel: u8) -> CounterResult<Self> {
         let cuava_radiation_counter: Box<dyn CuavaRadiationCounter + Send> =
             Box::new(RadiationCounter::new(Connection::from_path(bus, addr)));
-        Subsystem::new(cuava_radiation_counter, power_channel, eps_bus, eps_addr, eps_wd_timeout)
-    }
-
-    /// Get the requested telemetry item
-//     pub fn get_telemetry(
-//         &self,
-//         telem_type: counter_telemetry::Type,
-//     ) -> Result<f64, String> {
-//         let result = run!(
-//             self.radiation_counter
-//                 .lock()
-//                 .unwrap()
-//                 .get_telemetry(telem_type.into()),
-//             self.errors
-//         )?;
-// 
-//         Ok(result)
-//     }
-
-
-    // in order to get power status implement EPS struct from eps_api
-
-    /// Get the voltage being used by the module
-    pub fn get_voltage(&self) -> Result<f64, String> {
-        // TODO: Implement
-        Ok(10.0)
-    }
-
-    /// Get the current being used by the module
-    pub fn get_current(&self) -> Result<f64, String> {
-        // TODO: Implement
-        Ok(1.5)
-    }
-
-    /// Get the power being used by the module
-    pub fn get_power(&self) -> Result<f64, String> {
-        // TODO: Implement
-        Ok(15.0)
-    }
-    
-    /// Get the current on/off status of the radiation counter
-    pub fn get_power_on_off(&self) -> Result<bool, String> {
-        let radiation_counter = self.radiation_counter.lock().unwrap();
-        Ok(run!(radiation_counter.get_power_status(), self.errors)?.into())
-    }
-    
-    /// Set the radiation counter power status
-    pub fn set_power(&self, status: bool) -> Result<MutationResponse, String> {
-        let mut radiation_counter = self.radiation_counter.lock().unwrap();
-        match run!(radiation_counter.set_power_status(status), self.errors) {
-            Ok(_v) => Ok(MutationResponse {
-                success: true,
-                errors: "".to_string(),
-            }),
-            Err(e) => Ok(MutationResponse {
-                success: false,
-                errors: e,
-            }),
-        }
+        Subsystem::new(cuava_radiation_counter, power_channel)
     }
 
     /// Get the specific type of reset counts
@@ -275,8 +208,6 @@ impl Subsystem {
         let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
         
         let rchk = RCHk {
-            voltage: result.voltage as i32,
-            current: result.current as i32,
             timestamps: result.timestamps as Vec<i32>,
             readings: result.readings as Vec<i32>,
         };

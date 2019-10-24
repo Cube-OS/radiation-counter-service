@@ -87,20 +87,6 @@ graphql_object!(Root: Context as "Mutation" |&self| {
         executor.context().subsystem().set_last_mutation(Mutations::SetWatchdogPeriod);
         Ok(executor.context().subsystem().set_watchdog_period(period as u8)?)
     }
-    
-    //  Set the power (on/off) to be supplied
-    //
-    //  mutation {
-    //      powerOnOff(status: Boolean!) {
-    //          success: Boolean!
-    //          errors: String!
-    //      }
-    //  }
-    field power_on_off(&executor, status: bool) -> FieldResult<MutationResponse>
-        as "Change the power status"
-    {
-        Ok(executor.context().subsystem().set_power(status)?)
-    }
 
     //  Pass a custom command through to the system
     //

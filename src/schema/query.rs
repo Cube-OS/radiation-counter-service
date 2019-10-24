@@ -25,21 +25,6 @@ use juniper::FieldResult;
 pub struct Telemetry;
 
 graphql_object!(Telemetry: Context as "telemetry" |&self| {
-    // Fetch telemetry data for the radiation counter.
-    // All returned values are automatically converted from their original raw data.
-    //
-    // powerTelemetry {
-    //     voltage: f64,
-    //     current: f64,
-    //     power: f64,
-    //     powerOnOff: bool,
-    // }
-    field power_telemetry() -> counter_telemetry::Telemetry
-        as "Power Telemetry"
-    {
-        counter_telemetry::Telemetry {}
-    }
-
     // Get the number of board resets, by category
     //
     // telemetry {
@@ -120,17 +105,6 @@ graphql_object!(Root: Context as "Query" |&self| {
     {
         Ok(executor.context().subsystem().get_errors()?)
     }
-
-    // Get the system power status
-    //
-    // {
-    //     power: PowerState
-    // }
-//     field power(&executor) -> FieldResult<GetPowerResponse>
-//         as "Last errors encountered"
-//     {
-//         Ok(executor.context().subsystem().get_power()?)
-//     }
 
     // Get telemetry from the Radiation Counter
     field telemetry(&executor) -> FieldResult<Telemetry>

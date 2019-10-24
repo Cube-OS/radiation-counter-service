@@ -9,6 +9,5 @@ pub struct MutationResponse {
 
 pub mod last_error;
 pub mod reset_telemetry;
-pub mod counter_telemetry;
 pub mod subsystem;
 pub mod housekeeping;

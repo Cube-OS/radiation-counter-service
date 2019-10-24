@@ -40,7 +40,6 @@ fn main() {
     .unwrap();
 
     let rc_config = Config::new("radiation-counter-service").unwrap();
-    let eps_config = Config::new("gomspace-eps-service").unwrap();
 
     // TODO: fail gracefully
     // Radiation counter bus and addr
@@ -49,28 +48,12 @@ fn main() {
     let addr = device["addr"].as_integer().expect("Failed to get RC I2C address value") as u16;
     let power_channel = device["power_channel"].as_integer().expect("Failed to get RC power channel value") as u8;
     
-    // EPS bus, addr and wd_timeout
-    let eps_bus = eps_config.get("bus").expect("Failed to get EPS I2C bus value");
-    let eps_bus = eps_bus.as_str().expect("Failed to get EPS I2C bus value");
-    
-    let eps_addr = eps_config.get("i2c_addr").expect("Failed to get EPS I2C address value");
-    let eps_addr = eps_addr.as_str().expect("Failed to get EPS I2C address value");
-    
-    let eps_wd_timeout = eps_config.get("wd_timeout").expect("Failed to get EPS wd_timeout value");
-    let eps_wd_timeout = eps_wd_timeout.as_integer().expect("Failed to get EPS wd_timeout value") as u32;
-    
-    let eps_addr: u8 = if eps_addr.starts_with("0x") {
-        u8::from_str_radix(& eps_addr[2..], 16).unwrap()
-    } else {
-        u8::from_str_radix(eps_addr, 16).unwrap()
-    };
-
     info!("I2C Bus:       {}", bus);
     info!("I2C Address:   {}", addr);
     info!("Power Channel: {}", power_channel);
 
     let subsystem: Box<Subsystem> = Box::new(
-        Subsystem::from_path(bus, addr, power_channel, eps_bus, eps_addr, eps_wd_timeout)
+        Subsystem::from_path(bus, addr, power_channel)
             .map_err(|err| {
                 error!("Failed to create subsystem: {:?}", err);
                 err
