@@ -7,7 +7,9 @@ pub struct MutationResponse {
     pub success: bool,
 }
 
+/// Last error faced by the subsystem
 pub mod last_error;
-pub mod reset_telemetry;
+/// Radiation counter subsystem
 pub mod subsystem;
+/// Housekeeping data for radiation counter
 pub mod housekeeping;

@@ -5,7 +5,8 @@ use failure::Error;
 use rust_i2c::*;
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
-use std::time::Duration;
+// use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use log::info;
 
 /// Enum for tracking the last mutation executed
@@ -35,15 +36,31 @@ fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
 }
 
 fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
+    let mut last_30s = 0;
+    
     loop {
-        let count_result = counter.lock().unwrap().get_radiation_count();
+        thread::sleep(Duration::from_secs(5));
+        
+        // Get the current time
+        let now: Duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        let timestamp = now.as_secs() as i32;
+        
+        // Get the radiation counter
+        let mut radiation_counter = counter.lock().unwrap();
+        
+        // Every 30 seconds, start a new sum
+        if timestamp - last_30s >= 30 {
+            last_30s = timestamp;
+            radiation_counter.swap_30s_block(timestamp);
+        }
+        
+        let count_result = radiation_counter.get_radiation_count();
         match count_result {
-            Ok((timestamp, count)) => {
-                println!("Got count {} at time {:?}", count, timestamp);
+            Ok((count1, count2, count3)) => {
+                println!("Got counts ({}, {}, {}) at time {:?}", count1, count2, count3, timestamp);
             },
             Err(e) => println!("Error {}", e),
         }
-        thread::sleep(Duration::from_secs(5));
     }
 }
 
@@ -60,13 +77,11 @@ pub struct Subsystem {
     pub watchdog_handle: Arc<Mutex<thread::JoinHandle<()>>>,
     /// Count retriever thread handle
     pub counter_handle: Arc<Mutex<thread::JoinHandle<()>>>,
-    /// Channel number for EPS connection
-    pub power_channel: u8,
 }
 
 impl Subsystem {
     /// Create a new subsystem instance for the service to use
-    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>, power_channel: u8) -> CounterResult<Self> {
+    pub fn new(radiation_counter: Box<dyn CuavaRadiationCounter + Send>) -> CounterResult<Self> {
         let radiation_counter = Arc::new(Mutex::new(radiation_counter));
         let watchdog_thread_counter = radiation_counter.clone();
         let watchdog = thread::spawn(move || watchdog_thread(watchdog_thread_counter));
@@ -80,24 +95,14 @@ impl Subsystem {
             errors: Arc::new(RwLock::new(vec![])),
             watchdog_handle: Arc::new(Mutex::new(watchdog)),
             counter_handle: Arc::new(Mutex::new(counter)),
-            power_channel: power_channel,
         })
     }
     
     /// Create the underlying Radiation CounterResult object and then create a new subsystem which will use it
-    pub fn from_path(bus: &str, addr: u16, power_channel: u8) -> CounterResult<Self> {
+    pub fn from_path(bus: &str, addr: u16) -> CounterResult<Self> {
         let cuava_radiation_counter: Box<dyn CuavaRadiationCounter + Send> =
             Box::new(RadiationCounter::new(Connection::from_path(bus, addr)));
-        Subsystem::new(cuava_radiation_counter, power_channel)
-    }
-
-    /// Get the specific type of reset counts
-    pub fn get_reset_telemetry(
-        &self,
-        telem_type: reset_telemetry::Type,
-    ) -> Result<u8, String> {
-        let radiation_counter = self.radiation_counter.lock().unwrap();
-        Ok(run!(radiation_counter.get_reset_telemetry(telem_type.into()), self.errors)?.into())
+        Subsystem::new(cuava_radiation_counter)
     }
 
     /// Get the current watchdog period setting
@@ -157,21 +162,6 @@ impl Subsystem {
         }
     }
 
-    /// Pass raw command values through to the EPS
-//     pub fn raw_command(&self, command: u8, data: Vec<u8>) -> Result<MutationResponse, String> {
-//         let radiation_counter = self.radiation_counter.lock().unwrap();
-//         match run!(radiation_counter.raw_command(command, data), self.errors) {
-//             Ok(_v) => Ok(MutationResponse {
-//                 success: true,
-//                 errors: "".to_string(),
-//             }),
-//             Err(e) => Ok(MutationResponse {
-//                 success: false,
-//                 errors: e,
-//             }),
-//         }
-//     }
-
     /// Record the last mutation executed by the service
     pub fn set_last_mutation(&self, mutation: Mutations) {
         if let Ok(mut last_cmd) = self.last_mutation.write() {
@@ -195,7 +185,7 @@ impl Subsystem {
     }
     
     /// Get radiation count over i2c
-    pub fn get_radiation_count(&self) -> Result<(Duration, u8), String> {
+    pub fn get_radiation_count(&self) -> Result<(u8, u8, u8), String> {
         let mut radiation_counter = self.radiation_counter.lock().unwrap();
         Ok(run!(radiation_counter.get_radiation_count(), self.errors)?)
     }
@@ -204,12 +194,13 @@ impl Subsystem {
     pub fn get_housekeeping(&self) -> CounterResult<RCHk> {
         info!("RC housekeeping data requested");
         
-        let mut radiation_counter = self.radiation_counter.lock().unwrap();
+        let radiation_counter = self.radiation_counter.lock().unwrap();
         let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
         
         let rchk = RCHk {
-            timestamps: result.timestamps as Vec<i32>,
-            readings: result.readings as Vec<i32>,
+            timestamp: result.timestamp as i32,
+            avg_sum_30s: result.avg_sum_30s as i32,
+            prev_avg_sum_30s: result.prev_avg_sum_30s as i32,
         };
         Ok(rchk)
     }

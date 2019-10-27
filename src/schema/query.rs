@@ -25,22 +25,6 @@ use juniper::FieldResult;
 pub struct Telemetry;
 
 graphql_object!(Telemetry: Context as "telemetry" |&self| {
-    // Get the number of board resets, by category
-    //
-    // telemetry {
-    //     reset {
-    //         brownOut: i32,
-    //         automaticSoftware: i32,
-    //         manual: i32,
-    //         watchdog: i32,
-    //     }
-    // }
-    field reset() -> reset_telemetry::Telemetry
-        as "Reset Telemetry"
-    {
-        reset_telemetry::Telemetry {}
-    }
-
     // Fetch the current watchdog timeout period, in minutes
     //
     // telemetry {
@@ -108,12 +92,14 @@ graphql_object!(Root: Context as "Query" |&self| {
 
     // Get telemetry from the Radiation Counter
     field telemetry(&executor) -> FieldResult<Telemetry>
+        as "Radiation counter telemetry"
     {
         Ok(Telemetry)
     }
     
-    // Housekeeping
+    // Housekeeping data
     field rchk(&executor) -> FieldResult<RCHk>
+        as "Housekeeping data"
     {
         Ok(executor.context().subsystem().get_housekeeping()?)
     }

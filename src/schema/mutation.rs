@@ -87,23 +87,4 @@ graphql_object!(Root: Context as "Mutation" |&self| {
         executor.context().subsystem().set_last_mutation(Mutations::SetWatchdogPeriod);
         Ok(executor.context().subsystem().set_watchdog_period(period as u8)?)
     }
-
-    //  Pass a custom command through to the system
-    //
-    //  - command: Decimal value of the command byte to send
-    //  - data: Decimal values of the command parameters to send. Should be `[0]` if there are no additional parameters required.
-    //
-    //  mutation {
-    //      issueRawCommand(command: Int!, data: [Int!]) {
-    //          success: Boolean!
-    //          errors: String!
-    //      }
-    //  }
-//     field issue_raw_command(&executor, command: i32, data: Vec<i32>) -> FieldResult<MutationResponse>
-//         as "Issue raw command to Radiation Counter"
-//     {
-//         executor.context().subsystem().set_last_mutation(Mutations::RawCommand);
-//         let data_u8 = data.iter().map(|x| *x as u8).collect();
-//         Ok(executor.context().subsystem().raw_command(command as u8, data_u8)?)
-//     }
 });

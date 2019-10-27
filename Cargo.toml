@@ -15,8 +15,8 @@ log = "^0.4.0"
 mount = "0.3.0"
 syslog = "4.0"
 
-# [profile.release]
-# lto = true
-# opt-level = "z"
-# panic = "abort"
-# codegen-units = 1
+[profile.release]
+lto = true
+opt-level = "z"
+panic = "abort"
+codegen-units = 1

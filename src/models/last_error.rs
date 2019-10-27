@@ -5,8 +5,6 @@ use radiation_counter_api::{ErrorCode};
 pub enum Error {
     /// No errors
     None,
-    /// Bad radiation counter ID request
-    BadCounterID,
     /// The command to fetch the last error failed
     CommandError = 0x04,
     /// A reset had to occur
@@ -20,7 +18,6 @@ pub enum Error {
 fn to_error(error_code: ErrorCode) -> Error {
     match error_code {
         ErrorCode::None => Error::None,
-        ErrorCode::BadCounterID => Error::BadCounterID,
         ErrorCode::CommandError => Error::CommandError,
         ErrorCode::ResetOccurred => Error::ResetOccurred,
         ErrorCode::UnknownCommand => Error::UnknownCommand,

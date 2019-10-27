@@ -1,34 +1,54 @@
 //
-// Copyright (C) 2017 Kubos Corporation
+// Copyright (C) 2019 The University of Sydney
 //
-// Licensed under the Apache License, Version 2.0 (the "License")
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
+//! Kubos Service for interacting with the radiation counter payload
+//!
+//! # Configuration
+//!
+//! The service must be configured in `/home/system/etc/config.toml` with the following fields:
+//!
+//! - `[radiation-counter-service.addr]`
+//!
+//!     - `ip` - Specifies the service's IP address
+//!     - `port` - Specifies the port on which the service will be listening for UDP packets
+//!
+//! - `[radiation-counter-service.device]`
+//!
+//!     - `bus` - Specifies the I2C bus
+//! 	- `addr` - Specifies the I2C address
+//!
+//! For example:
+//!
+//! ```toml
+//! [radiation-counter-service.addr]
+//! ip = "0.0.0.0"
+//! port = 8082
+//!
+//! [radiation-counter-service.device]
+//! bus = "/dev/i2c-0"
+//! addr = 0x69
+//! ```
 
-// #![deny(warnings)]
+// TODO: Commands table
+
+#![deny(missing_docs, warnings)]
 
 #[macro_use]
 extern crate juniper;
 #[macro_use]
 extern crate kubos_service;
 
+/// Service models
 pub mod models;
+/// GraphQL schema for the radiation counter
 pub mod schema;
 
 use crate::models::subsystem::Subsystem;
 use crate::schema::mutation::Root as MutationRoot;
 use crate::schema::query::Root as QueryRoot;
 use kubos_service::{Config, Service};
-use log::{error,info};
+use log::info;
 use syslog::Facility;
 
 fn main() {
@@ -36,30 +56,25 @@ fn main() {
         Facility::LOG_DAEMON,
         log::LevelFilter::Debug,
         Some("radiation-counter-service"),
-    )
-    .unwrap();
-
-    let rc_config = Config::new("radiation-counter-service").unwrap();
-
-    // TODO: fail gracefully
+    ).unwrap();
+    
+    // Get the radiation-counter-service component from the config file
+    let rc_config = Config::new("radiation-counter-service").expect("Failed to load RC config");
+    
     // Radiation counter bus and addr
+    // [radiation-counter-service.device]
     let device = rc_config.get("device").unwrap();
     let bus = device["bus"].as_str().expect("Failed to get RC I2C bus value");
     let addr = device["addr"].as_integer().expect("Failed to get RC I2C address value") as u16;
-    let power_channel = device["power_channel"].as_integer().expect("Failed to get RC power channel value") as u8;
     
-    info!("I2C Bus:       {}", bus);
-    info!("I2C Address:   {}", addr);
-    info!("Power Channel: {}", power_channel);
-
+    info!("I2C Bus:     {}", bus);
+    info!("I2C Address: {}", addr);
+    
+    // Create the radiation counter subsystem
     let subsystem: Box<Subsystem> = Box::new(
-        Subsystem::from_path(bus, addr, power_channel)
-            .map_err(|err| {
-                error!("Failed to create subsystem: {:?}", err);
-                err
-            })
-            .unwrap(),
+        Subsystem::from_path(bus, addr).expect("Failed to create subsystem"),
     );
-
+    
+    // Start the radiation counter service
     Service::new(rc_config, subsystem, QueryRoot, MutationRoot).start();
 }

@@ -19,7 +19,7 @@
 use crate::models::subsystem::Subsystem;
 use kubos_service;
 
-/// Service context structure used to allow GraphQL requests to interact with the underlying EPS
+/// Service context structure used to allow GraphQL requests to interact with the underlying radiation counter
 pub type Context = kubos_service::Context<Box<Subsystem>>;
 
 pub mod mutation;
