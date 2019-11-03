@@ -10,3 +10,4 @@ Cargo.lock
 **/*.rs.bk
 
 run.sh
+build_iobc.sh

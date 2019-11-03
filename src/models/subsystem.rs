@@ -59,7 +59,7 @@ fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
             Ok((count1, count2, count3)) => {
                 println!("Got counts ({}, {}, {}) at time {:?}", count1, count2, count3, timestamp);
             },
-            Err(e) => println!("Error {}", e),
+            Err(e) => info!("Error {}", e),
         }
     }
 }
