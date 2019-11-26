@@ -1,8 +1,7 @@
 [radiation-counter-service.addr]
 ip = "127.0.0.1"
-port = 8082
+port = 8101
 
 [radiation-counter-service.device]
 bus = "/dev/i2c-2"
-addr = 0x69
-power_channel = 1
+addr = 0x31

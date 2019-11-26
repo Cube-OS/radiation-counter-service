@@ -198,6 +198,9 @@ impl Subsystem {
         let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
         
         let rchk = RCHk {
+            rc1_reading: result.rc1_reading as i32,
+            rc2_reading: result.rc2_reading as i32,
+            rc3_reading: result.rc1_reading as i32,
             timestamp: result.timestamp as i32,
             avg_sum_30s: result.avg_sum_30s as i32,
             prev_avg_sum_30s: result.prev_avg_sum_30s as i32,
