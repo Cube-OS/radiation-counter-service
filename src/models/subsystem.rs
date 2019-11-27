@@ -39,7 +39,7 @@ fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
     let mut last_30s = 0;
     
     loop {
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(30));
         
         // Get the current time
         let now: Duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
@@ -48,7 +48,7 @@ fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
         // Get the radiation counter
         let mut radiation_counter = counter.lock().unwrap();
         
-        // Every 30 seconds, start a new sum
+        // Every 30 seconds, start a new sum and save the previous sum
         if timestamp - last_30s >= 30 {
             last_30s = timestamp;
             radiation_counter.swap_30s_block(timestamp);
@@ -185,7 +185,7 @@ impl Subsystem {
     }
     
     /// Get radiation count over i2c
-    pub fn get_radiation_count(&self) -> Result<(u8, u8, u8), String> {
+    pub fn get_radiation_count(&self) -> Result<(u16, u16, u16), String> {
         let mut radiation_counter = self.radiation_counter.lock().unwrap();
         Ok(run!(radiation_counter.get_radiation_count(), self.errors)?)
     }
@@ -200,10 +200,10 @@ impl Subsystem {
         let rchk = RCHk {
             rc1_reading: result.rc1_reading as i32,
             rc2_reading: result.rc2_reading as i32,
-            rc3_reading: result.rc1_reading as i32,
+            rc3_reading: result.rc3_reading as i32,
             timestamp: result.timestamp as i32,
-            avg_sum_30s: result.avg_sum_30s as i32,
-            prev_avg_sum_30s: result.prev_avg_sum_30s as i32,
+            sum_30s: result.sum_30s as i32,
+            pre_sum_30s: result.prev_sum_30s as i32,
         };
         Ok(rchk)
     }
