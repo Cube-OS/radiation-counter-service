@@ -25,16 +25,16 @@ use juniper::FieldResult;
 pub struct Telemetry;
 
 graphql_object!(Telemetry: Context as "telemetry" |&self| {
-    // Fetch the current watchdog timeout period, in minutes
-    //
-    // telemetry {
-    //         watchdogPeriod: u8,
+    // // Fetch the current watchdog timeout period, in minutes
+    // //
+    // // telemetry {
+    // //         watchdogPeriod: u8,
+    // // }
+    // field watchdog_period(&executor) -> FieldResult<i32>
+    //     as "Current watchdog period in minutes"
+    // {
+    //     Ok(i32::from(executor.context().subsystem().get_comms_watchdog_period()?))
     // }
-    field watchdog_period(&executor) -> FieldResult<i32>
-        as "Current watchdog period in minutes"
-    {
-        Ok(i32::from(executor.context().subsystem().get_comms_watchdog_period()?))
-    }
 
     // Fetch the last error which was encountered by the system while executing a command
     //
@@ -90,12 +90,12 @@ graphql_object!(Root: Context as "Query" |&self| {
         Ok(executor.context().subsystem().get_errors()?)
     }
 
-    // Get telemetry from the Radiation Counter
-    field telemetry(&executor) -> FieldResult<Telemetry>
-        as "Radiation counter telemetry"
-    {
-        Ok(Telemetry)
-    }
+    // // Get telemetry from the Radiation Counter
+    // field telemetry(&executor) -> FieldResult<Telemetry>
+    //     as "Radiation counter telemetry"
+    // {
+    //     Ok(Telemetry)
+    // }
     
     // Housekeeping data
     field rchk(&executor) -> FieldResult<RCHk>

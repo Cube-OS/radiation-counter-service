@@ -26,7 +26,7 @@ pub struct Root;
 
 // Base GraphQL mutation model
 graphql_object!(Root: Context as "Mutation" |&self| {
-    // Execute a trivial command against the system
+    // Execute a trivial command against the system and resets the watchdog
     //
     //  mutation {
     //      noop {
@@ -71,20 +71,20 @@ graphql_object!(Root: Context as "Mutation" |&self| {
         Ok(executor.context().subsystem().reset_watchdog()?)
     }
 
-    //  Set the communications watchdog timeout period
-    //
-    //  - period: New timeout period, in minutes
-    //
-    //  mutation {
-    //      setWatchdogPeriod(period: Int!) {
-    //          success: Boolean!
-    //          errors: String!
-    //      }
-    //  }
-    field set_watchdog_period(&executor, period: i32) -> FieldResult<MutationResponse>
-        as "Set watchdog period (in minutes)"
-    {
-        executor.context().subsystem().set_last_mutation(Mutations::SetWatchdogPeriod);
-        Ok(executor.context().subsystem().set_watchdog_period(period as u8)?)
-    }
+    // //  Set the communications watchdog timeout period
+    // //
+    // //  - period: New timeout period, in minutes
+    // //
+    // //  mutation {
+    // //      setWatchdogPeriod(period: Int!) {
+    // //          success: Boolean!
+    // //          errors: String!
+    // //      }
+    // //  }
+    // field set_watchdog_period(&executor, period: i32) -> FieldResult<MutationResponse>
+    //     as "Set watchdog period (in minutes)"
+    // {
+    //     executor.context().subsystem().set_last_mutation(Mutations::SetWatchdogPeriod);
+    //     Ok(executor.context().subsystem().set_watchdog_period(period as u8)?)
+    // }
 });

@@ -23,11 +23,11 @@
 //! ```toml
 //! [radiation-counter-service.addr]
 //! ip = "0.0.0.0"
-//! port = 8082
+//! port = 8101
 //!
 //! [radiation-counter-service.device]
 //! bus = "/dev/i2c-0"
-//! addr = 0x69
+//! addr = 0x31
 //! ```
 
 // TODO: Commands table
