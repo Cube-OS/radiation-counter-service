@@ -28,43 +28,6 @@ pub enum Mutations {
     TestHardware,
 }
 
-// fn watchdog_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
-//     loop {
-//         thread::sleep(Duration::from_secs(60));
-//         let _res_ = counter.lock().unwrap().reset_comms_watchdog();
-//     }
-// }
-
-// fn counter_thread(counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>) {
-//     let mut last_30s = 0;
-    
-//     loop {
-//         thread::sleep(Duration::from_secs(30));
-        
-//         // Get the current time
-//         let now: Duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-//         let timestamp = now.as_secs() as i32;
-        
-//         // Get the radiation counter
-//         let mut radiation_counter = counter.lock().unwrap();
-
-//         let count_result = radiation_counter.get_radiation_count();
-
-//         // Every 30 seconds, start a new sum and save the previous sum
-//         if timestamp - last_30s >= 30 {
-//             last_30s = timestamp;
-//             radiation_counter.swap_30s_block(timestamp);
-//         }
-        
-//         match count_result {
-//             Ok((count1, count2, count3)) => {
-//                 println!("Got counts ({}, {}, {}) at time {:?}", count1, count2, count3, timestamp);
-//             },
-//             Err(e) => info!("Error {}", e),
-//         }
-//     }
-// }
-
 /// Main structure for controlling and accessing system resources
 #[derive(Clone)]
 pub struct Subsystem {
@@ -106,12 +69,6 @@ impl Subsystem {
         Subsystem::new(cuava_radiation_counter)
     }
 
-    // /// Get the current watchdog period setting
-    // pub fn get_comms_watchdog_period(&self) -> Result<u8, String> {
-    //     let radiation_counter = self.radiation_counter.lock().unwrap();
-    //     Ok(run!(radiation_counter.get_comms_watchdog_period(), self.errors)?)
-    // }
-
     /// Get the last error the Radiation Counter encountered
     pub fn get_last_error(&self) -> Result<last_error::Error, String> {
         let radiation_counter = self.radiation_counter.lock().unwrap();
@@ -148,21 +105,6 @@ impl Subsystem {
         }
     }
 
-    // /// Set the I2C watchdog timeout period
-    // pub fn set_watchdog_period(&self, period: u8) -> Result<MutationResponse, String> {
-    //     let radiation_counter = self.radiation_counter.lock().unwrap();
-    //     match run!(radiation_counter.set_comms_watchdog_period(period), self.errors) {
-    //         Ok(_v) => Ok(MutationResponse {
-    //             success: true,
-    //             errors: "".to_string(),
-    //         }),
-    //         Err(e) => Ok(MutationResponse {
-    //             success: false,
-    //             errors: e,
-    //         }),
-    //     }
-    // }
-
     /// Record the last mutation executed by the service
     pub fn set_last_mutation(&self, mutation: Mutations) {
         if let Ok(mut last_cmd) = self.last_mutation.write() {
@@ -197,11 +139,6 @@ impl Subsystem {
 
         let mut radiation_counter = self.radiation_counter.lock().unwrap();
 
-        // // Get the current time and save the previous sum
-        // let now: Duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-        // let timestamp = now.as_secs() as i32;
-        // radiation_counter.swap_30s_block(timestamp);
-
         //Count result ignored here, counter data saved in rc_readings. 
         let _rc_count= radiation_counter.get_radiation_count();
         let result = run!(radiation_counter.get_housekeeping()).unwrap_or_default();
@@ -210,9 +147,6 @@ impl Subsystem {
             rc1_reading: result.rc1_reading as i32,
             rc2_reading: result.rc2_reading as i32,
             rc3_reading: result.rc3_reading as i32,
-            // timestamp: result.timestamp as i32,
-            // sum_30s: result.sum_30s as i32,
-            // pre_sum_30s: result.prev_sum_30s as i32,
         };
         Ok(rchk)
     }

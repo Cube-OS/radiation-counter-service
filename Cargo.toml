@@ -1,7 +1,7 @@
 [package]
 name = "radiation-counter-service"
 version = "0.1.0"
-authors = ["BH Cho <byunghoon.cho@gmail.com>"]
+authors = ["BH Cho <byunghoon.cho@gmail.com>, Xueliang <xbai9225@gmail.com>"]
 edition = "2018"
 
 [dependencies]
