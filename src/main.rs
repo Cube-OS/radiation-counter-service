@@ -26,11 +26,9 @@
 //! port = 8101
 //!
 //! [radiation-counter-service.device]
-//! bus = "/dev/i2c-0"
-//! addr = 0x31
+//! bus = "/dev/i2c-1"
+//! addr = 0x32
 //! ```
-
-// TODO: Commands table
 
 #![deny(missing_docs, warnings)]
 
@@ -44,11 +42,11 @@ pub mod models;
 /// GraphQL schema for the radiation counter
 pub mod schema;
 
-use crate::models::subsystem::Subsystem;
-use crate::schema::mutation::Root as MutationRoot;
-use crate::schema::query::Root as QueryRoot;
 use kubos_service::{Config, Service};
 use log::info;
+use models::subsystem::Subsystem;
+use schema::mutation::Root as MutationRoot;
+use schema::query::Root as QueryRoot;
 use syslog::Facility;
 
 fn main() {
@@ -56,25 +54,24 @@ fn main() {
         Facility::LOG_DAEMON,
         log::LevelFilter::Debug,
         Some("radiation-counter-service"),
-    ).unwrap();
-    
+    )
+    .unwrap();
     // Get the radiation-counter-service component from the config file
     let rc_config = Config::new("radiation-counter-service").expect("Failed to load RC config");
-    
     // Radiation counter bus and addr
     // [radiation-counter-service.device]
     let device = rc_config.get("device").unwrap();
-    let bus = device["bus"].as_str().expect("Failed to get RC I2C bus value");
-    let addr = device["addr"].as_integer().expect("Failed to get RC I2C address value") as u16;
-    
+    let bus = device["bus"]
+        .as_str()
+        .expect("Failed to get RC I2C bus value");
+    let addr = device["addr"]
+        .as_integer()
+        .expect("Failed to get RC I2C address value") as u16;
     info!("I2C Bus:     {}", bus);
     info!("I2C Address: {}", addr);
-    
     // Create the radiation counter subsystem
-    let subsystem: Box<Subsystem> = Box::new(
-        Subsystem::from_path(bus, addr).expect("Failed to create subsystem"),
-    );
-    
+    let subsystem: Box<Subsystem> =
+        Box::new(Subsystem::from_path(bus, addr).expect("Failed to create subsystem"));
     // Start the radiation counter service
     Service::new(rc_config, subsystem, QueryRoot, MutationRoot).start();
 }

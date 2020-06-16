@@ -16,87 +16,15 @@
 
 //! Service queries
 
-use crate::models::*;
 use crate::models::housekeeping::RCHk;
 use crate::schema::Context;
 use juniper::FieldResult;
-
-/// Telemetry query structure
-pub struct Telemetry;
-
-graphql_object!(Telemetry: Context as "telemetry" |&self| {
-    // // Fetch the current watchdog timeout period, in minutes
-    // //
-    // // telemetry {
-    // //         watchdogPeriod: u8,
-    // // }
-    // field watchdog_period(&executor) -> FieldResult<i32>
-    //     as "Current watchdog period in minutes"
-    // {
-    //     Ok(i32::from(executor.context().subsystem().get_comms_watchdog_period()?))
-    // }
-
-    // Fetch the last error which was encountered by the system while executing a command
-    //
-    // telemetry {
-    //         lastRadiationCounterError: last_error::Error
-    // }
-    field last_radiation_counter_error(&executor) -> FieldResult<last_error::Error>
-        as "Last Radiation Counter error reported"
-    {
-        Ok(executor.context().subsystem().get_last_error()?)
-    }
-});
 
 /// Top-level query root structure
 pub struct Root;
 
 // Base GraphQL query
 graphql_object!(Root: Context as "Query" |&self| {
-
-    // Test query to verify service is running without
-    // attempting to communicate with hardware
-    //
-    // {
-    //    ping: "pong"
-    // }
-    field ping() -> FieldResult<String>
-        as "Test service query"
-    {
-        Ok(String::from("pong"))
-    }
-
-    // Get the last mutation run
-    //
-    // {
-    //    ack: subsystem::Mutations
-    // }
-    field ack(&executor) -> FieldResult<subsystem::Mutations>
-        as "Last run mutation"
-    {
-        let last_cmd = executor.context().subsystem().last_mutation.read()?;
-        Ok(*last_cmd)
-    }
-
-    // Get all errors encountered since the last time
-    // this field was queried
-    //
-    // {
-    //    errors: [String]
-    // }
-    field errors(&executor) -> FieldResult<Vec<String>>
-        as "Last errors encountered"
-    {
-        Ok(executor.context().subsystem().get_errors()?)
-    }
-
-    // // Get telemetry from the Radiation Counter
-    // field telemetry(&executor) -> FieldResult<Telemetry>
-    //     as "Radiation counter telemetry"
-    // {
-    //     Ok(Telemetry)
-    // }
-    
     // Housekeeping data
     field rchk(&executor) -> FieldResult<RCHk>
         as "Housekeeping data"
