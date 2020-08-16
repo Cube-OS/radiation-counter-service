@@ -17,6 +17,7 @@
 //! Service queries
 
 use crate::models::housekeeping::RCHk;
+use crate::models::QueryResponse;
 use crate::schema::Context;
 use juniper::FieldResult;
 
@@ -26,21 +27,21 @@ pub struct Root;
 // Base GraphQL query
 graphql_object!(Root: Context as "Query" |&self| {
 
-    /// Verify service is running without communicating with the underlying subsystem
+    // Verify service is running without communicating with the underlying subsystem
     field ping() -> FieldResult<String>
         as "Ping the service"
     {
         Ok(String::from("pong"))    
     }
 
-    /// Ping the system via i2c
-    field testping(&executor) -> FieldResult<GenericResponse>
+    // Ping the system via i2c
+    field testping(&executor) -> FieldResult<QueryResponse>
         as "Ping the device"
     {
-       Ok(executor.context().subsystem().testping()?)
+       Ok(executor.context().subsystem().test_ping()?)
     }
 
-    /// Radiation counter housekeeping data
+    // Radiation counter housekeeping data
     field rchk(&executor) -> FieldResult<RCHk>
         as "Housekeeping data"
     {

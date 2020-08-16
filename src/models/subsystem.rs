@@ -63,14 +63,14 @@ impl Subsystem {
     }
 
     /// Ping system using I2C
-    pub fn test_ping(&self) -> Result<GenericResponse, String> {
+    pub fn test_ping(&self) -> Result<QueryResponse, String> {
         let radiation_counter = self.radiation_counter.lock().unwrap();
         match run!(radiation_counter.test_ping(), self.errors) {
-            Ok(_v) => Ok(GenericResponse {
+            Ok(_v) => Ok(QueryResponse {
                 success: true,
                 errors: "".to_string(),
             }),
-            Err(e) => Ok(GenericResponse {
+            Err(e) => Ok(QueryResponse {
                 success: false,
                 errors: e,
             }),

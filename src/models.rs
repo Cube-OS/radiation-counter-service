@@ -7,10 +7,9 @@ pub struct MutationResponse {
     pub success: bool,
 }
 
-/// Common response fields structure for requests
-/// which don't return any specific data
+/// Generic query response struct
 #[derive(GraphQLObject)]
-pub struct GenericResponse {
+pub struct QueryResponse {
     /// Any errors encountered by the request
     pub errors: String,
     /// Request completion success or failure

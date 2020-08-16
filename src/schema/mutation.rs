@@ -26,35 +26,35 @@ pub struct Root;
 
 // Base GraphQL mutation model
 graphql_object!(Root: Context as "Mutation" |&self| {
-    //  Manually reset the Radiation Counter
-    //
-    //  mutation {
-    //      manualReset {
-    //          success: Boolean!
-    //          errors: String!
-    //      }
-    //  }
-    field manual_reset(&executor) -> FieldResult<MutationResponse>
-        as "Perform manual reset of Radiation Counter"
-    {
-        executor.context().subsystem().set_last_mutation(Mutations::ManualReset);
-        Ok(executor.context().subsystem().manual_reset()?)
-    }
+    // //  Manually reset the Radiation Counter
+    // //
+    // //  mutation {
+    // //      manualReset {
+    // //          success: Boolean!
+    // //          errors: String!
+    // //      }
+    // //  }
+    // field manual_reset(&executor) -> FieldResult<MutationResponse>
+    //     as "Perform manual reset of Radiation Counter"
+    // {
+    //     executor.context().subsystem().set_last_mutation(Mutations::ManualReset);
+    //     Ok(executor.context().subsystem().manual_reset()?)
+    // }
 
-    // Control power to the radiation counter rasperry pi
-    //
-    //  mutation {
-    //      rpiPower(state : bool) {
-    //          success: Boolean!
-    //          errors: String!
-    //      }
-    //  }
-    field rpi_power(&executor, state:bool) -> FieldResult<MutationResponse>
-        as "Set Rasperry Pi power state"
-    {
-        executor.context().subsystem().set_last_mutation(Mutations::RpiPower);
-        Ok(executor.context().subsystem().rpi_power(state)?)
-    }
+    // // Control power to the radiation counter rasperry pi
+    // //
+    // //  mutation {
+    // //      rpiPower(state : bool) {
+    // //          success: Boolean!
+    // //          errors: String!
+    // //      }
+    // //  }
+    // field rpi_power(&executor, state:bool) -> FieldResult<MutationResponse>
+    //     as "Set Rasperry Pi power state"
+    // {
+    //     executor.context().subsystem().set_last_mutation(Mutations::RpiPower);
+    //     Ok(executor.context().subsystem().rpi_power(state)?)
+    // }
 
 
 });
