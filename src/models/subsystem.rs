@@ -13,6 +13,8 @@ pub enum Mutations {
     None,
     /// Manual reset
     ManualReset,
+    /// Control power to Rasperry Pi
+    RpiPower,
 }
 
 /// Main structure for controlling and accessing system resources
@@ -59,6 +61,22 @@ impl Subsystem {
             }),
         }
     }
+
+    /// Control power mode of Rasperry Pi
+    pub fn rpi_power(&self, state : bool) -> Result<MutationResponse, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        match run!(radiation_counter.rpi_power(state), self.errors) {
+            Ok(_v) => Ok(MutationResponse {
+                success: true,
+                errors: "".to_string(),
+            }),
+            Err(e) => Ok(MutationResponse {
+                success: false,
+                errors: e,
+            }),
+        }
+    }
+
 
     /// Record the last mutation executed by the service
     pub fn set_last_mutation(&self, mutation: Mutations) {
