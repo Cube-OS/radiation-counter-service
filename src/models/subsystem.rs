@@ -62,6 +62,21 @@ impl Subsystem {
         }
     }
 
+    /// Ping system using I2C
+    pub fn test_ping(&self) -> Result<GenericResponse, String> {
+        let radiation_counter = self.radiation_counter.lock().unwrap();
+        match run!(radiation_counter.test_ping(), self.errors) {
+            Ok(_v) => Ok(GenericResponse {
+                success: true,
+                errors: "".to_string(),
+            }),
+            Err(e) => Ok(GenericResponse {
+                success: false,
+                errors: e,
+            }),
+        }
+    }
+
     /// Control power mode of Rasperry Pi
     pub fn rpi_power(&self, state : bool) -> Result<MutationResponse, String> {
         let radiation_counter = self.radiation_counter.lock().unwrap();

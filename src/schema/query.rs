@@ -25,7 +25,22 @@ pub struct Root;
 
 // Base GraphQL query
 graphql_object!(Root: Context as "Query" |&self| {
-    // Housekeeping data
+
+    /// Verify service is running without communicating with the underlying subsystem
+    field ping() -> FieldResult<String>
+        as "Ping the service"
+    {
+        Ok(String::from("pong"))    
+    }
+
+    /// Ping the system via i2c
+    field testping(&executor) -> FieldResult<GenericResponse>
+        as "Ping the device"
+    {
+       Ok(executor.context().subsystem().testping()?)
+    }
+
+    /// Radiation counter housekeeping data
     field rchk(&executor) -> FieldResult<RCHk>
         as "Housekeeping data"
     {
