@@ -5,9 +5,9 @@ authors = ["BH Cho <byunghoon.cho@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-kubos-service = { path = "../../../kubos/services/kubos-service" }
-rust-i2c = { path = "../../hal/rust-hal/rust-i2c" }
-radiation-counter-api = { path = "../../apis/radiation-counter-api" }
+kubos-service = { git = "https://github.com/Cube-OS/kubos-service" }
+rust-i2c = { git = "https://github.com/Cube-OS/rust-i2c" }
+radiation-counter-api = { git = "https://github.com/Cube-OS/radiation-counter-api" }
 failure = "0.1.2"
 juniper =  "0.11"
 log = "^0.4.0"
