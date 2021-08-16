@@ -9,7 +9,7 @@ kubos-service = { git = "https://github.com/Cube-OS/kubos-service" }
 rust-i2c = { git = "https://github.com/Cube-OS/rust-i2c" }
 radiation-counter-api = { git = "https://github.com/Cube-OS/radiation-counter-api" }
 failure = "0.1.2"
-juniper =  "0.11"
+juniper =  "0.14.2"
 log = "^0.4.0"
 mount = "0.3.0"
 syslog = "4.0"
