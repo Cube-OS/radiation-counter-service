@@ -1,21 +1,15 @@
 [package]
 name = "radiation-counter-service"
 version = "0.1.0"
-authors = ["BH Cho <byunghoon.cho@gmail.com>, Xueliang <xbai9225@gmail.com>"]
+authors = ["BH Cho <byunghoon.cho@gmail.com>, Xueliang Bai <xbai9225@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-kubos-service = { path = "../../../kubos/services/kubos-service" }
-rust-i2c = { path = "../../../kubos/hal/rust-hal/rust-i2c" }
-radiation-counter-api = { path = "../../apis/radiation-counter-api" }
+kubos-service = { git = "ssh://git@github.com/Cube-OS/kubos-service.git"}
+rust-i2c = { git = "ssh://git@github.com/Cube-OS/rust-i2c.git"}
+radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git" }
 failure = "0.1.2"
 juniper =  "0.11"
 log = "^0.4.0"
 mount = "0.3.0"
 syslog = "4.0"
-
-[profile.release]
-lto = true
-opt-level = "z"
-panic = "abort"
-codegen-units = 1
