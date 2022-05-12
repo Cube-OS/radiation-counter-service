@@ -21,9 +21,11 @@ use crate::graphql::*;
 service_macro!{
     // generic: Ping => fn ping(&self,_g: Generic) -> Result<GenericResponse>; (Generic, GenericResponse),
     query: Ping => fn ping(&self) -> Result<()>;
-    query: GetLastMutation => fn get_last_mutation(&self) -> Result<Mutations>; in:; out: GqlMutations;
-    query: GetLastError => fn get_last_error(&self) -> Result<ErrorCode>; in:; out: GplErrorCode;     // This line replaces structure in the api with graphql compatible items in the graphql.rs
-    query: GetCounts => fn get_radiation_count(&self) -> Result<(u16, u16, u16)>; in:; out: GplRCHk;
+    // query: GetLastMutation => fn get_last_mutation(&self) -> Result<Mutations>; in:; out: GqlMutations;
+    query: GetLastError => fn get_last_error(&self) -> Result<ErrorCode>; 
+            in:; out: GplErrorCode;     // This line replaces structure in the api with graphql compatible items in the graphql.rs
+    query: GetCounts => fn get_radiation_count(&self) -> Result<(u16, u16, u16)>; 
+            in:; out: GplRCHk;
     query: GetErrors => fn get_errors(&self) -> Result<Vec<String>>; 
     mutation: ManualReset => fn manual_reset(&self) -> Result<()>; 
     mutation: ResetWatchdog => fn reset_watchdog(&self) -> Result<()>; 

@@ -34,8 +34,7 @@ pub enum Mutations {
 pub struct Subsystem {
     /// Underlying Radiation Counter object
     pub radiation_counter: Arc<Mutex<Box<dyn CuavaRadiationCounter + Send>>>,
-    /// Last mutation executed
-    pub last_mutation: Arc<RwLock<Mutations>>,
+    // pub last_mutation: Arc<RwLock<Mutations>>,
     /// Errors accumulated over all queries and mutations
     pub errors: Arc<RwLock<Vec<String>>>,
    // /// Watchdog kicking thread handle
@@ -56,7 +55,7 @@ impl Subsystem {
 
         Ok(Self {
             radiation_counter,
-            last_mutation: Arc::new(RwLock::new(Mutations::None)),
+            // last_mutation: Arc::new(RwLock::new(Mutations::None)),
             errors: Arc::new(RwLock::new(vec![])),
          //   watchdog_handle: Arc::new(Mutex::new(watchdog)),
            // counter_handle: Arc::new(Mutex::new(counter)),
@@ -70,23 +69,27 @@ impl Subsystem {
         Subsystem::new(cuava_radiation_counter)
     }
 
-    /// Record the last mutation executed by the service
-    pub fn set_last_mutation(&self, mutation: Mutations) {
-        if let Ok(mut last_cmd) = self.last_mutation.write() {
-            *last_cmd = mutation;
-        }
-    }
+    // /// Record the last mutation executed by the service
+    // pub fn set_last_mutation(&self, mutation: Mutations) {
+    //     if let Ok(mut last_cmd) = self.last_mutation.write() {
+    //         *last_cmd = mutation;
+    //     }
+    // }
 
     // Ping
-    pub fn ping(&self) -> Result<GenericResponse> {
-        Ok(GenericResponse::new())
+    pub fn ping(&self) -> Result<()> {
+        Ok(())
     }
     
-    // Get the last excuated mutation
-    pub fn get_last_mutation(&self) -> Result<Mutations> {
-        println!("get_last_mutation");
-        Ok(self.radiation_counter.lock().unwrap().last_mutation.read()?)
-    }
+    // // Get the last excuated mutation
+    // pub fn get_last_mutation(&self) -> Result<Mutations> {
+    //     println!("get_last_mutation");
+    //     // Ok(self.radiation_counter.lock().unwrap().last_mutation.read()?)
+    //     match self.subsystem().last_mutation() {
+    //         Ok(x) => Ok(x),
+    //         Err(e) => Err(Error::from(e)),
+    //     }
+    // }
 
 
     /// Get the last error the Radiation Counter encountered
