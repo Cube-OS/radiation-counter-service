@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 #kubos-service = { git = "ssh://git@github.com/Cube-OS/kubos-service.git"}
 rust-i2c = { git = "ssh://git@github.com/Cube-OS/rust-i2c.git"}
-radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git", branch = 'cubeos'}
+radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git"}
 cubeos-service = { git = "ssh://git@github.com/Cube-OS/cubeos-service.git"}
 failure = "0.1.2"
 juniper = "0.14.2"
