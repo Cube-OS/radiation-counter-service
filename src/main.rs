@@ -32,26 +32,29 @@
 
 // TODO: Commands table
 
-#![deny(missing_docs, warnings)]
+// #![deny(missing_docs, warnings)]
 
-#[macro_use]
-extern crate juniper;
-#[macro_use]
-extern crate kubos_service;
+// extern crate juniper;
+// extern crate cubeos_service;
 
 /// Service models
-pub mod models;
+pub mod subsystem;
 /// GraphQL schema for the radiation counter
-pub mod schema;
+pub mod graphql;
+/// Creating service functions for the radiation coutnter
+pub mod service;
 
-use crate::models::subsystem::Subsystem;
-use crate::schema::mutation::Root as MutationRoot;
-use crate::schema::query::Root as QueryRoot;
-use kubos_service::{Config, Service};
-use log::info;
+///include API
+use radiation_counter_api::*;
+
+use cubeos_service::{Config,Service};
+use crate::service::*;
+use crate::subsystem::Subsystem;  
+use std::sync::{Arc};
+use log::{error,info};
 use syslog::Facility;
 
-fn main() {
+fn main() -> CounterResult<()>{
     syslog::init(
         Facility::LOG_DAEMON,
         log::LevelFilter::Debug,
@@ -69,12 +72,72 @@ fn main() {
     
     info!("I2C Bus:     {}", bus);
     info!("I2C Address: {}", addr);
+
+    // Only needed for the ground feature
+    #[cfg(feature = "ground")]
+    let socket = rc_config
+    .get("ground")
+    .get("udp_socket")
+    .ok_or_else(|| {
+        error!("Failed to load 'udp-socket' config value");
+        format_err!("Failed to load 'udp-socket' config value");
+    })
+    .unwrap();
+
+    #[cfg(feature = "ground")]
+    let target = rc_config
+    .get("ground")
+    .get("target")
+    .ok_or_else(|| {
+        error!("Failed to load 'target' config value");
+        format_err!("Failed to load 'target' config value");
+    })
+    .unwrap();
     
     // Create the radiation counter subsystem
     let subsystem: Box<Subsystem> = Box::new(
-        Subsystem::from_path(bus, addr).expect("Failed to create subsystem"),
+        Subsystem::from_path(bus, addr)
+            .map_err(|err| {
+                error!("Failed to create subsystem: {:?}", err);
+                err
+            })
+            .unwrap(),
     );
     
-    // Start the radiation counter service
-    Service::new(rc_config, subsystem, QueryRoot, MutationRoot).start();
+    #[cfg(feature = "ground")]
+    // Start debug service
+    Service::new(
+        rc_config,
+        QueryRoot,
+        MutationRoot,
+        socket.as_str().unwrap().to_string(),
+        target.as_str().unwrap().to_string(),
+    ).start();
+
+    #[cfg(feature = "graphql")]
+    // Start up graphql server
+    Service::new(
+        rc_config,
+        subsystem,
+        QueryRoot,
+        MutationRoot,
+    )
+    .start();
+
+    #[cfg(not(any(feature = "ground",feature = "graphql")))]
+    //Start up UDP server
+    Service::new(
+        rc_config,
+        subsystem,
+        Some(Arc::new(udp_handler)),
+    )
+    .start();
+
+    #[cfg(debug)]
+    println!("{:?}", rc_config);
+
+    #[cfg(debug)]
+    debug();
+    
+    Ok(())
 }

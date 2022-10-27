@@ -1,7 +1,15 @@
+# Space Segment
 [radiation-counter-service.addr]
-ip = "127.0.0.1"
+ip = "0.0.0.0"
 port = 8101
 
 [radiation-counter-service.device]
 bus = "/dev/i2c-2"
 addr = 0x31
+
+# Ground Segment
+[radiation-counter-service.ground]
+err_buff_len = 64
+wd_timeout = 1000
+udp_socket = '192.168.0.1:8101'
+target = '192.168.0.2:8101'
