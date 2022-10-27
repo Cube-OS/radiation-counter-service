@@ -19,6 +19,5 @@ serde = "1.0"
 # enable features for cubeos-service
 [features]
 default = ['cubeos-service/default']
-graphql = ['cubeos-service/graphql']
 ground = ['cubeos-service/ground']
 debug = ['cubeos-service/debug']
