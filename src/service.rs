@@ -2,6 +2,7 @@
 // It enables the communication via UDP or GraphQL (depending on --features flag during compilation)
 
 use cubeos_service::*;
+use radiation_counter_api::*;
 
 service_macro!{
         use Error;

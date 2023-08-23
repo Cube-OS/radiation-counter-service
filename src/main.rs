@@ -59,13 +59,32 @@ fn main() -> CounterResult<()>{
     let rc_config = Config::new("radiation-counter-service").expect("Failed to load RC config");
     
     // Radiation counter bus and addr
-    // [radiation-counter-service.device]
-    let device = rc_config.get("device").unwrap();
-    let bus = device["bus"].as_str().expect("Failed to get RC I2C bus value");
-    let addr = device["addr"].as_integer().expect("Failed to get RC I2C address value") as u16;
-    
-    info!("I2C Bus:     {}", bus);
-    info!("I2C Address: {}", addr);
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
+    let bus = rc_config
+        .get("i2c_bus")
+        .ok_or_else(|| {
+            error!("Failed to load 'bus' config value");
+        })
+        .unwrap();
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
+    let bus = bus.as_str().unwrap();
+
+    // Alternatively the I2C address can be hardcoded here
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
+    let addr = rc_config
+        .get("i2c_addr")
+        .ok_or_else(|| {
+            error!("Failed to load 'bus' config value");
+        })
+        .unwrap();
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
+    let addr = addr.as_str().unwrap();
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
+    let addr: u16 = if addr.starts_with("0x") {
+        u16::from_str_radix(&addr[2..], 16).unwrap()
+    } else {
+        u16::from_str_radix(addr, 16).unwrap()
+    };    
 
     // Only needed for the ground feature
     #[cfg(any(feature = "terminal",feature = "ground"))]
@@ -73,7 +92,6 @@ fn main() -> CounterResult<()>{
     .get("udp_socket")
     .ok_or_else(|| {
         error!("Failed to load 'udp-socket' config value");
-        format_err!("Failed to load 'udp-socket' config value");
     })
     .unwrap();
 
@@ -82,11 +100,11 @@ fn main() -> CounterResult<()>{
     .get("target")
     .ok_or_else(|| {
         error!("Failed to load 'target' config value");
-        format_err!("Failed to load 'target' config value");
     })
     .unwrap();
     
     // Create the radiation counter subsystem
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
     let subsystem: Box<Subsystem> = Box::new(
         Subsystem::from_path(bus, addr)
             .map_err(|err| {
