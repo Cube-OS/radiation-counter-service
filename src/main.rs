@@ -53,7 +53,7 @@ use log::{error,info};
 
 fn main() -> CounterResult<()>{
     
-    Logger::init();
+    let _ = Logger::init();
     
     // Get the radiation-counter-service component from the config file
     let rc_config = Config::new("radiation-counter-service").expect("Failed to load RC config");
