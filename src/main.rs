@@ -44,7 +44,7 @@ pub mod service;
 
 ///include API
 use radiation_counter_api::*;
-use failure::{format_err};
+
 use cubeos_service::{Config,Logger,Service};
 use crate::service::*;
 use crate::subsystem::Subsystem;  

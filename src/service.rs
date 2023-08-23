@@ -4,8 +4,7 @@
 use cubeos_service::*;
 use radiation_counter_api::*;
 
-#[cfg(not(any(feature = "ground",feature = "terminal")))]
-use crate::subsystem::*;
+
 
 service_macro!{
         use Error;
