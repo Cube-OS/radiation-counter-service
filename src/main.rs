@@ -44,7 +44,7 @@ pub mod service;
 
 ///include API
 use radiation_counter_api::*;
-
+use failure::{format_err};
 use cubeos_service::{Config,Logger,Service};
 use crate::service::*;
 use crate::subsystem::Subsystem;  
@@ -70,7 +70,6 @@ fn main() -> CounterResult<()>{
     // Only needed for the ground feature
     #[cfg(any(feature = "terminal",feature = "ground"))]
     let socket = rc_config
-    .get("ground")
     .get("udp_socket")
     .ok_or_else(|| {
         error!("Failed to load 'udp-socket' config value");
@@ -80,7 +79,6 @@ fn main() -> CounterResult<()>{
 
     #[cfg(any(feature = "terminal",feature = "ground"))]
     let target = rc_config
-    .get("ground")
     .get("target")
     .ok_or_else(|| {
         error!("Failed to load 'target' config value");
