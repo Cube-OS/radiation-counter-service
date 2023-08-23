@@ -5,19 +5,18 @@ authors = ["BH Cho <byunghoon.cho@gmail.com>, Xueliang Bai <xbai9225@gmail.com>"
 edition = "2018"
 
 [dependencies]
-#kubos-service = { git = "ssh://git@github.com/Cube-OS/kubos-service.git"}
-rust-i2c = { git = "ssh://git@github.com/Cube-OS/rust-i2c.git"}
-radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git"}
+# radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git"}
+radiation-counter-api = { path = "../radiation-counter-api"}
 cubeos-service = { git = "ssh://git@github.com/Cube-OS/cubeos-service.git"}
+i2c-rs = { git = "ssh://git@github.com/Cube-OS/i2c-rs.git"}
 failure = "0.1.2"
-juniper = "0.14.2"
 log = "^0.4.0"
 mount = "0.3.0"
-syslog = "4.0"
 serde = "1.0"
 
 # enable features for cubeos-service
 [features]
 default = ['cubeos-service/default']
 ground = ['cubeos-service/ground']
+terminal = ['cubeos-service/terminal']
 debug = ['cubeos-service/debug']

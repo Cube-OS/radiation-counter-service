@@ -1,12 +1,10 @@
 // use crate::models::housekeeping::RCHk;
 use radiation_counter_api::*;
-// use radiation_counter_api::commands::last_error;
+use i2c_rs::Connection;
 
 // use failure::Error;
-use rust_i2c::*;
 use std::sync::{Arc, Mutex, RwLock};
 use cubeos_service::*;
-use cubeos_error::*;
 use std::convert::From;
 use serde::*;
 
@@ -114,7 +112,7 @@ impl Subsystem {
     }
 
     /// Get radiation count over i2c
-    pub fn get_radiation_count(&self) -> Result<(u16, u16, u16)> {
+    pub fn get_radiation_count(&self) -> Result<RCHk> {
         println!("get_radiation_count");
         match self.radiation_counter.lock().unwrap().get_radiation_count() {
             Ok(x) => Ok(x),

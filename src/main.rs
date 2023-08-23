@@ -39,27 +39,21 @@
 
 /// Service models
 pub mod subsystem;
-/// GraphQL schema for the radiation counter
-pub mod graphql;
 /// Creating service functions for the radiation coutnter
 pub mod service;
 
 ///include API
 use radiation_counter_api::*;
 
-use cubeos_service::{Config,Service};
+use cubeos_service::{Config,Logger,Service};
 use crate::service::*;
 use crate::subsystem::Subsystem;  
 use std::sync::{Arc};
 use log::{error,info};
-use syslog::Facility;
 
 fn main() -> CounterResult<()>{
-    syslog::init(
-        Facility::LOG_DAEMON,
-        log::LevelFilter::Debug,
-        Some("radiation-counter-service"),
-    ).unwrap();
+    
+    Logger::init();
     
     // Get the radiation-counter-service component from the config file
     let rc_config = Config::new("radiation-counter-service").expect("Failed to load RC config");
@@ -74,7 +68,7 @@ fn main() -> CounterResult<()>{
     info!("I2C Address: {}", addr);
 
     // Only needed for the ground feature
-    #[cfg(feature = "ground")]
+    #[cfg(any(feature = "terminal",feature = "ground"))]
     let socket = rc_config
     .get("ground")
     .get("udp_socket")
@@ -84,7 +78,7 @@ fn main() -> CounterResult<()>{
     })
     .unwrap();
 
-    #[cfg(feature = "ground")]
+    #[cfg(any(feature = "terminal",feature = "ground"))]
     let target = rc_config
     .get("ground")
     .get("target")
@@ -108,23 +102,21 @@ fn main() -> CounterResult<()>{
     // Start debug service
     Service::new(
         rc_config,
-        QueryRoot,
-        MutationRoot,
         socket.as_str().unwrap().to_string(),
         target.as_str().unwrap().to_string(),
+        Some(Arc::new(json_handler)),
     ).start();
 
-    #[cfg(feature = "graphql")]
-    // Start up graphql server
+    #[cfg(feature = "terminal")]
+    // Start terminal service
     Service::new(
         rc_config,
-        subsystem,
-        QueryRoot,
-        MutationRoot,
-    )
-    .start();
+        socket.as_str().unwrap().to_string(),
+        target.as_str().unwrap().to_string(),
+        Some(Arc::new(terminal)),
+    ).start();
 
-    #[cfg(not(any(feature = "ground",feature = "graphql")))]
+    #[cfg(not(any(feature = "ground",feature = "terminal")))]
     //Start up UDP server
     Service::new(
         rc_config,
