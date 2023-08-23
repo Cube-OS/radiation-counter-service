@@ -5,8 +5,7 @@ authors = ["BH Cho <byunghoon.cho@gmail.com>, Xueliang Bai <xbai9225@gmail.com>"
 edition = "2018"
 
 [dependencies]
-# radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git"}
-radiation-counter-api = { path = "../radiation-counter-api"}
+radiation-counter-api = { git = "ssh://git@github.com/Cube-OS/radiation-counter-api.git"}
 cubeos-service = { git = "ssh://git@github.com/Cube-OS/cubeos-service.git"}
 i2c-rs = { git = "ssh://git@github.com/Cube-OS/i2c-rs.git"}
 failure = "0.1.2"
